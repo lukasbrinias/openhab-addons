@@ -23,4 +23,7 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 public class ControllerConfiguration {
 
     public String nodeId = "0";
+    public boolean bluetooth = false;
+    public String wifiSsid = "";
+    public String wifiPassword = "";
 }

@@ -27,6 +27,7 @@ export default [
         "**/.mocharc.cjs",
         "eslint.config.mjs",
         "webpack.config.js",
+        "ble-require.js",
     ]),
     js.configs.recommended,
     ...ts.configs.recommendedTypeChecked,

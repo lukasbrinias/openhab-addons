@@ -513,7 +513,8 @@ public class ControllerHandler extends BaseBridgeHandler implements MatterClient
 
         logger.debug("matter config: {}", storagePath);
         final ControllerConfiguration config = getConfigAs(ControllerConfiguration.class);
-        client.connect(websocketService, new BigInteger(config.nodeId), controllerName, storagePath);
+        client.connect(websocketService, new BigInteger(config.nodeId), controllerName, storagePath, config.bluetooth,
+                config.wifiSsid, config.wifiPassword);
     }
 
     /**

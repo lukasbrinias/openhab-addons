@@ -282,6 +282,9 @@ export class DeviceNode {
                 // Optional when operating only one device on a host, Default port is 5540
                 network: {
                     port: this.port,
+                    // The bridge is commissioned over the network. Bluetooth, when the controller enables it, only
+                    // supports the controller role (see ble-require.js)
+                    ble: false,
                 },
 
                 // Provide Commissioning relevant settings

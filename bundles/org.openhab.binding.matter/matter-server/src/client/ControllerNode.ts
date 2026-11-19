@@ -8,8 +8,20 @@ import { EventType, NodeState } from "../MessageTypes";
 import { printError } from "../util/error";
 import { ControllerBehavior, SoftwareUpdateManager } from "@matter/node";
 import { DclOtaUpdateService, PhysicalDeviceProperties } from "@matter/main/protocol";
+// Adds Bluetooth support to matter.js. It stays inactive until "ble.enable" is set, see initialize()
+import "@matter/nodejs-ble";
 
 const logger = Logger.get("ControllerNode");
+
+export interface ControllerNodeOptions {
+    /**
+     * Commission devices over Bluetooth. Devices that are not on the network yet only accept their Wi-Fi credentials
+     * this way. Needs BlueZ and its D-Bus API, so Linux only.
+     */
+    bluetooth?: boolean;
+    /** The Wi-Fi network a device is joined to when it is commissioned over Bluetooth */
+    wifiNetwork?: { wifiSsid: string; wifiCredentials: string };
+}
 
 // Attributes that are always read fresh from the device, even when the rest of the node is served from the
 // local subscription cache (requestFromRemote=false). softwareVersion/softwareVersionString only change on a
@@ -54,6 +66,7 @@ export class ControllerNode {
         private readonly nodeNum: number,
         public readonly ws: WebSocketSession,
         private readonly netInterface?: string,
+        public readonly options: ControllerNodeOptions = {},
     ) {}
 
     get Store() {
@@ -135,6 +148,15 @@ export class ControllerNode {
         // TODO we may need to choose which network interface to use
         if (this.netInterface !== undefined) {
             this.environment.vars.set("mdns.networkinterface", this.netInterface);
+        }
+
+        if (this.options.bluetooth) {
+            // noble chooses its Bluetooth binding when it is first required. On Linux that is raw HCI by default,
+            // which needs CAP_NET_RAW (and host networking in a container) and is not bundled. The D-Bus binding talks
+            // to bluetoothd instead, so it shares the adapter with the host's Bluetooth stack and needs no privileges.
+            process.env.NOBLE_BINDINGS = "dbus";
+            this.environment.vars.set("ble.enable", true);
+            logger.info("Bluetooth commissioning enabled (BlueZ over D-Bus)");
         }
         this.commissioningController = new CommissioningController({
             environment: {

@@ -91,6 +91,8 @@ public class MatterWebsocketClient implements WebSocketListener, MatterWebsocket
 
     private static final int BUFFER_SIZE = 1048576 * 2; // 2 Mb
     private static final int REQUEST_TIMEOUT_SECONDS = 60 * 3; // 3 minutes
+    // connection parameters that are passed to the Matter server but must not be logged
+    private static final Set<String> SENSITIVE_PARAMETERS = Set.of("wifiPassword");
 
     private final ScheduledExecutorService scheduler = ThreadPoolManager
             .getScheduledPool("matter.MatterWebsocketClient");
@@ -451,17 +453,30 @@ public class MatterWebsocketClient implements WebSocketListener, MatterWebsocket
         return responseFuture;
     }
 
+    /**
+     * Builds the query string of the websocket URL from the connection parameters
+     *
+     * @param maskSensitive replace the value of parameters that must not end up in a log (passwords)
+     */
+    static String queryString(Map<String, String> parameters, boolean maskSensitive) {
+        return parameters.entrySet().stream()
+                .map((Map.Entry<String, String> entry) -> URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8)
+                        + "="
+                        + (maskSensitive && SENSITIVE_PARAMETERS.contains(entry.getKey()) ? "***"
+                                : URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8)))
+                .collect(Collectors.joining("&"));
+    }
+
     private void connectWebsocket(String host, int port) throws Exception {
         String dest = "ws://" + host + ":" + port;
+        String loggedDest = dest;
         Map<String, String> connectionParameters = this.connectionParameters;
         if (connectionParameters != null) {
-            dest += "?" + connectionParameters.entrySet().stream()
-                    .map((Map.Entry<String, String> entry) -> URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8)
-                            + "=" + URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
-                    .collect(Collectors.joining("&"));
+            dest += "?" + queryString(connectionParameters, false);
+            loggedDest += "?" + queryString(connectionParameters, true);
         }
 
-        logger.debug("Connecting {}", dest);
+        logger.debug("Connecting {}", loggedDest);
         WebSocketClient client = new WebSocketClient();
         client.setMaxIdleTimeout(Long.MAX_VALUE);
         client.start();

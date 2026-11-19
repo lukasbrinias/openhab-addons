@@ -14,6 +14,24 @@
 				<default>0</default>
 				<advanced>true</advanced>
 			</parameter>
+			<parameter name="bluetooth" type="boolean" required="false">
+				<label>Bluetooth Commissioning</label>
+				<description>Commission devices over Bluetooth, which Wi-Fi devices that are not on the network yet need. Requires
+					BlueZ and its D-Bus API (Linux only).</description>
+				<default>false</default>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="wifiSsid" type="text" required="false">
+				<label>Wi-Fi SSID</label>
+				<description>The Wi-Fi network that devices commissioned over Bluetooth are joined to. Needs the password as well.</description>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="wifiPassword" type="text" required="false">
+				<label>Wi-Fi Password</label>
+				<context>password</context>
+				<description>The password of the Wi-Fi network that devices commissioned over Bluetooth are joined to</description>
+				<advanced>true</advanced>
+			</parameter>
 		</config-description>
 	</bridge-type>
 

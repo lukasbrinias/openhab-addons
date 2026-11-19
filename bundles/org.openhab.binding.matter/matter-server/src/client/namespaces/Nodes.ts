@@ -107,7 +107,7 @@ export class Nodes {
         let ipPort: number | undefined;
         let ip: string | undefined;
         let instanceId: string | undefined;
-        const ble = false;
+        const ble = this.controllerNode.options.bluetooth === true;
 
         if (typeof pairingCode === "string" && pairingCode.trim().length > 0) {
             pairingCode = pairingCode.trim();
@@ -160,8 +160,12 @@ export class Nodes {
         // empty wifiNetwork/threadNetwork with "must not be empty" before commissioning even starts. Devices that
         // are already on their operational network (e.g. a Thread device joined externally beforehand) are
         // commissioned over IP without re-provisioning, so omitting the credentials here is the correct behaviour.
-        const wifiSsid = await this.controllerNode.Store.get<string>("WiFiSsid", "");
-        const wifiCredentials = await this.controllerNode.Store.get<string>("WiFiPassword", "");
+        // Wi-Fi credentials only matter for devices that are commissioned over Bluetooth. The controller's
+        // configuration takes precedence over the store (where matter.js's shell keeps them).
+        const wifiNetwork = this.controllerNode.options.wifiNetwork;
+        const wifiSsid = wifiNetwork?.wifiSsid ?? (await this.controllerNode.Store.get<string>("WiFiSsid", ""));
+        const wifiCredentials =
+            wifiNetwork?.wifiCredentials ?? (await this.controllerNode.Store.get<string>("WiFiPassword", ""));
         if (wifiSsid.length > 0 && wifiCredentials.length > 0) {
             options.commissioning.wifiNetwork = { wifiSsid, wifiCredentials };
         }

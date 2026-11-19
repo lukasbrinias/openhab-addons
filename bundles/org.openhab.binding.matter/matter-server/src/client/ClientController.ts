@@ -30,8 +30,16 @@ export class ClientController extends Controller {
             throw new Error("Missing required parameters in the request");
         }
 
+        // Optional: Bluetooth commissioning, and the Wi-Fi network it hands to devices
+        const bluetooth = this.params.get("bluetooth") === "true";
+        const wifiSsid = this.params.get("wifiSsid");
+        const wifiPassword = this.params.get("wifiPassword");
+
         this.controllerName = controllerName;
-        this.controllerNode = new ControllerNode(storagePath, controllerName, nodeId, ws);
+        this.controllerNode = new ControllerNode(storagePath, controllerName, nodeId, ws, undefined, {
+            bluetooth,
+            wifiNetwork: wifiSsid && wifiPassword ? { wifiSsid, wifiCredentials: wifiPassword } : undefined,
+        });
     }
 
     id(): string {

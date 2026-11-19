@@ -21,6 +21,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.math.BigInteger;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -59,6 +61,18 @@ class MatterWebsocketClientTest {
     @BeforeEach
     void setUp() {
         client = new MatterWebsocketClient();
+    }
+
+    @Test
+    void testQueryStringMasksPasswordForLogging() {
+        Map<String, String> parameters = Map.of("nodeId", "1", "wifiSsid", "my network", "wifiPassword", "p&ss=word");
+
+        // the connection itself gets the real values, encoded
+        assertEquals(Set.of("nodeId=1", "wifiSsid=my+network", "wifiPassword=p%26ss%3Dword"),
+                Set.of(MatterWebsocketClient.queryString(parameters, false).split("&")));
+        // the log never sees the password
+        assertEquals(Set.of("nodeId=1", "wifiSsid=my+network", "wifiPassword=***"),
+                Set.of(MatterWebsocketClient.queryString(parameters, true).split("&")));
     }
 
     @Test

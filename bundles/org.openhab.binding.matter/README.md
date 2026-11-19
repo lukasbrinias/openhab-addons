@@ -90,6 +90,28 @@ If the device seems to be found in the logs, but can not be added, its possible 
 Hard resetting the device may help this case.
 See your device documentation for how to hard reset the device.
 
+### Device Pairing: Wi-Fi Devices
+
+A new Wi-Fi device is not on your network yet, so it can only be told which network to join over Bluetooth.
+Without help from openHAB, such a device has to be set up with another Matter controller first (usually an app on a phone), and openHAB can then pair it with a new pairing code as described above.
+
+openHAB can do this itself.
+Enable `bluetooth` on the controller Thing and give it the Wi-Fi network its devices should join (`wifiSsid` and `wifiPassword`).
+Put the device into pairing mode and pair it with its pairing code as usual: openHAB finds the device over Bluetooth, hands it the Wi-Fi network and finishes the pairing over the network.
+Searching for the device takes up to 3 minutes, which leaves time to put the device into pairing mode after the search has been started.
+
+Requirements:
+
+- Linux with BlueZ.
+  The binding uses BlueZ through its D-Bus API, so it shares the Bluetooth adapter with the Bluetooth binding and other programs.
+- The D-Bus system bus must be reachable from openHAB.
+  In a container, that means the socket `/run/dbus/system_bus_socket` of the host has to be passed in.
+- The device must be within range of the Bluetooth adapter while it is paired, and the Wi-Fi network must be one the device supports (many devices only support 2.4 GHz).
+- The Wi-Fi password is stored in the Thing configuration as plain text.
+
+This only covers Wi-Fi devices.
+Thread devices still need a Thread Border Router, see below.
+
 ### Device Pairing: Thread Devices
 
 Thread devices require a Thread Border Router and a bluetooth enabled device to facilitate the thread joining process (typically a mobile device).
@@ -154,9 +176,12 @@ You can find the correct interface name by running `ip a` and looking for the in
 
 The controller Thing must be created manually before devices can be discovered.
 
-| Name   | Type   | Description                            | Default | Required | Advanced |
-|--------|--------|----------------------------------------|---------|----------|----------|
-| nodeId | number | The matter node ID for this controller | 0       | yes      | no       |
+| Name         | Type    | Description                                                                     | Default | Required | Advanced |
+|--------------|---------|---------------------------------------------------------------------------------|---------|----------|----------|
+| nodeId       | number  | The matter node ID for this controller                                          | 0       | yes      | no       |
+| bluetooth    | boolean | Pair devices over Bluetooth, see [Wi-Fi Devices](#device-pairing-wi-fi-devices) | false   | no       | yes      |
+| wifiSsid     | text    | The Wi-Fi network that devices paired over Bluetooth are joined to              |         | no       | yes      |
+| wifiPassword | text    | The password of that Wi-Fi network                                              |         | no       | yes      |
 
 Note: The controller nodeId must not be changed after a controller is created.
 

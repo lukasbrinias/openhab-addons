@@ -15,6 +15,7 @@ package org.openhab.binding.matter.internal.controller;
 import java.lang.reflect.Type;
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -46,11 +47,35 @@ import com.google.gson.reflect.TypeToken;
 @NonNullByDefault
 public class MatterControllerClient extends MatterWebsocketClient {
 
-    public static final int PAIRING_TIMEOUT_SECONDS = 60 * 3;
+    /** How long matter.js looks for the device before it gives up, which is its own default */
+    public static final int DISCOVERY_TIMEOUT_SECONDS = 60 * 3;
+    /** Time for commissioning once the device has been found: pairing, attestation and joining the network */
+    public static final int COMMISSIONING_TIMEOUT_SECONDS = 60 * 2;
+    public static final int PAIRING_TIMEOUT_SECONDS = DISCOVERY_TIMEOUT_SECONDS + COMMISSIONING_TIMEOUT_SECONDS;
 
     public void connect(MatterWebsocketService wss, BigInteger nodeId, String controllerName, String storagePath) {
-        Map<String, String> params = Map.of("nodeId", nodeId.toString(), "controllerName", controllerName,
-                "storagePath", storagePath);
+        connect(wss, nodeId, controllerName, storagePath, false, "", "");
+    }
+
+    /**
+     * Connect to the Matter controller
+     *
+     * @param bluetooth commission devices over Bluetooth (BlueZ over D-Bus, Linux only)
+     * @param wifiSsid the Wi-Fi network devices commissioned over Bluetooth are joined to, used together with the
+     *            password
+     * @param wifiPassword the password of that network
+     */
+    public void connect(MatterWebsocketService wss, BigInteger nodeId, String controllerName, String storagePath,
+            boolean bluetooth, String wifiSsid, String wifiPassword) {
+        Map<String, String> params = new HashMap<>(
+                Map.of("nodeId", nodeId.toString(), "controllerName", controllerName, "storagePath", storagePath));
+        if (bluetooth) {
+            params.put("bluetooth", "true");
+        }
+        if (!wifiSsid.isEmpty() && !wifiPassword.isEmpty()) {
+            params.put("wifiSsid", wifiSsid);
+            params.put("wifiPassword", wifiPassword);
+        }
         connectWhenReady(wss, params);
     }
 
